@@ -1,25 +1,23 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from "react";
+import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import Home from "./webpages/home/home.jsx";
+import UserAuth from "./webpages/index.jsx";
+import Projectview from "./webpages/projectView/project.view.jsx";
+import Projectmember from "./webpages/projectmember/projectmember.jsx";
+import Request from "./webpages/request/request.jsx";
+import Task from "./webpages/projectmember/taskForMember.jsx";
 
-function App() {
+export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    <BrowserRouter>
+       <Routes>
+          <Route path="*" element={<UserAuth/>}></Route>
+          <Route path="/home" element={<Home/>}></Route>
+          <Route path="/seeProjects" element={<Projectview/>}></Route>
+          <Route path="/Projectmember/:id" element={<Projectmember/>}></Route>
+          <Route path="/request" element={<Request/>}></Route>
+          <Route path="/taskformember/:id" element={<Task/>}/>
+       </Routes>
+    </BrowserRouter>
+  )
 }
-
-export default App;

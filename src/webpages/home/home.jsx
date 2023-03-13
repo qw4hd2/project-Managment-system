@@ -6,7 +6,7 @@ import Modal from 'react-bootstrap/Modal';
 import Header from "../include/header.js";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEmpire } from '@fortawesome/free-brands-svg-icons';
-import { fetchEnrolledProject } from "./homData.js";
+import { fetchEnrolledProject,deleteProject } from "./homData.js";
 import Robot from "./../images/robot.jpg";
 import Footer from "./../include/footer.js";
 import swal from 'sweetalert';
@@ -61,6 +61,17 @@ function Home() {
         second: 'numeric',
         hour12: true,
       });
+      const handleDelete = async(id)=>{
+        await deleteProject(id).then((response)=>{
+            swal({
+                title:"Delete",
+                text:response,
+                icon:"success",
+                button:{},
+                timer:3000,
+            }).then(window.location.reload(true))
+        })
+      }
     return (<>
         <div className="container-fluid p-0 bg-container">
             <Header />
@@ -83,13 +94,13 @@ function Home() {
 
                             <div className="col-md-6 col-lg-4 column" key={index}>
                                 <div className="card card-project gr-3">
-                                    <div className="txt">
+                                    <div className="txt mt-3">
                                         <h1>{getInfo.projectName}</h1>
                                         <p>{getInfo.projectDescription}</p>
                                     </div>
                                     <NavLink to={`/Projectmember/${getInfo._id}`} >View Project</NavLink>
                                     <div className="ico-card">
-                                        <FontAwesomeIcon icon={faEmpire} />
+                                        <button className='btn btn-danger' onClick={e=>handleDelete(getInfo._id)}>Delete</button>
                                     </div>
                                 </div>
                             </div>

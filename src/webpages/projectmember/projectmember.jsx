@@ -7,19 +7,24 @@ import {
 import Header from "../include/header.js";
 import { FaSearch } from "react-icons/fa";
 import "./../css/style.css";
-import axios from 'axios';
-import { getUserSearchResults, postProjectMemberRequest, fetchProject, assignTask, taskAssignToMember } from "./dataRequest.js";
+import { getUserSearchResults, postProjectMemberRequest, fetchProject, assignTask, taskAssignToMember,requestTojoinProject,getRequestForAdmin ,leaveProejctteam,totalTaskSubmitBySpecificMember} from "./dataRequest.js";
+import { Badge } from "react-bootstrap";
+import {Link} from "react-router-dom";
+import swal from 'sweetalert';
 export default function App() {
   // projectAdmin
   const userId = sessionStorage.getItem('user');
-  const [getSearch, setSearchuser] = useState();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [getSearch, setSearchuser] = useState([]);
+  const [searchTerm, setSearchTerm] = useState([]);
   const [getProject, setProject] = useState('');
   const [getTask, setTask] = useState('');
-  const [showTask, setShowTask] = useState('');
   const [show, setShow] = useState({ index: 0, value: '', status: false });
+  const [showModal, setShowModal] = useState(false);
   const [click, setClick] = useState({ index: 0, value: "" });
+  const [getSubmit,setSubmit] = useState(0);
   const [showmemeberId, setmemberID] = useState('')
+  const [getRequest,setShowRequest] = useState('');
+  const [getLength,setLength] = useState()
   // projectId
   const { id } = useParams();
 
@@ -29,38 +34,103 @@ export default function App() {
   };
 
   const handleButtonClick = () => {
+    if(searchTerm.trim()){
     getUserSearchResults(searchTerm).then((response) => {
       setSearchuser(response);
     });
+  }else{
+    setSearchuser([]);
+    setSearchTerm([]);
+  }
   };
 
-  const handleClickRequest = async () => {
-    if (click.value == "") { } else {
-      postProjectMemberRequest(userId, id, click.value).then((response) => {
-        console.log(JSON.stringify(response));
-      });
-    }
+  const handleClickRequest = async (requestToId) => {
+    
+    postProjectMemberRequest(userId, id, requestToId).then((response) => {
+      swal(
+        response, {
+        icon: "info",
+        buttons: false,
+        timer: 3000,
+      }
+      )
+    }).catch((err) => {
+      swal(
+        err.response.data, {
+        icon: "error",
+        buttons: false,
+        timer: 3000,
+      }
+      )
+    })
   }
   const handleFetchProject = async () => {
     fetchProject(id).then((response) => {
       setProject(response);
-      const memberIdsent=response.team[0].userId._id;
-      taskAssignToMember(id,memberIdsent).then((response)=>{
-        setmemberID(response)
-        console.log(response)
-      })
-      
-    })
-  }
+      const team = response.team;
+      for (const member of team) {
+        const memberId = member.userId._id;
+        taskAssignToMember(id, [memberId]).then((response) => {
+          setmemberID(response)
+        });
+        totalTaskSubmitBySpecificMember([memberId],id).then((response) => {
+          setSubmit(response);
+        });
+      }
+    });
+  };
+  
   async function TaskValue() {
     assignTask(id, userId, show.value, getTask).then((response) => {
-      setShowTask(response);
+      swal(
+        response.message, {
+        icon: "info",
+        buttons: false,
+        timer: 3000,
+      }
+      ).then(setShow({ index: 0, value: '', status: false }))
     })
   }
+  const handleAccept = async(id,projectId,jionerId)=>{
+    getRequestForAdmin(id,projectId,jionerId).then((response)=>{
+      console.log(response)
+    }).catch((error)=>{
+      console.log(error)
+    })
+  }
+  const handleKick = async(memberId,id)=>{
+      swal({
+        title: "Are you sure?",
+        text: "Once deleted, you will not be able to see participate more!",
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+      })
+      .then(async(willDelete) => {
+        if (willDelete) {
+          await leaveProejctteam(memberId,id).then((response)=>{
+            swal("OK! you leave project team successfully", {
+              icon: "success",
+              buttons:{},
+              timer:3000,
+            });
+          })
+        } else {
+          swal("Your are in project!");
+        }
+      });
+  
+  }
   useEffect(() => {
-    handleFetchProject()
-    
+    handleFetchProject();
   }, []);
+  useEffect(() => {
+    requestTojoinProject(userId,id).then((response)=>{
+      setShowRequest(response);
+      setLength(response.length);
+    })
+  }, [userId,id]);
+
   return (
     <>
       <Header />
@@ -77,15 +147,18 @@ export default function App() {
                       width="60"
                     />
                     <h2 className="my-4">Task List</h2>
-                    <div className="d-flex">
+                    <div>
                       <div>
-                        <div className="form-outline d-flex">
-                          <input type="search" id="form1" className="form-control" onChange={handleInputChange} />
-                          <button className="btn btn-primary" onClick={handleButtonClick}><FaSearch /></button>
+                        <div className="form-outline d-flex justify-content-between">
+                          <div className="d-flex">
+                            <input type="search" id="form1" className="form-control" onChange={handleInputChange} />
+                            <button className="btn btn-primary" onClick={handleButtonClick}><FaSearch /></button>
+                          </div>
+                          <button className="request-admin" onClick={e=>setShowModal(true)}>Request<Badge>{getLength ? `(${getLength})` : null}</Badge></button>
                         </div>
                         {getSearch ? <>
                           {getSearch.map((result, index) => (
-                            <div key={index} className="bg-info rounded" onClick={e => setClick({ index: index, value: result._id })}>{result.userName}<button className="btn btn-success btn-block" onClick={handleClickRequest}>request</button></div>
+                            <div key={index} className="search-tap bg-info rounded" onClick={e => setClick({ index: index, value: result._id })}>{result.userName}<button className="btn btn-success btn-block" onClick={e=>handleClickRequest(result._id)}>request</button></div>
                           ))}
                         </> : <> </>}
                       </div>
@@ -97,40 +170,43 @@ export default function App() {
                   <div className="table-responsive">
                     <table className="table  text-white">
                       <thead>
-                        <tr>
+                        <tr className="text-center">
                           <th scope="col">Team Member</th>
                           <th scope="col">Task</th>
-                          <th scope="col">status</th>
+                          {/* <th scope="col">status</th> */}
                           <th scope="col">Actions</th>
                         </tr>
                       </thead>
                       {getProject ? <>
                         {getProject.team.map((memberDetails, index) => (
-                          <tbody key={index}>
+                          <tbody key={index} className="text-center">
                             <tr className="fw-normal">
                               <th>
                                 <span className="ms-2">{memberDetails.userId.userName}</span>
                               </th>
-                              {showmemeberId&&showmemeberId.length ?<>
-                              {showmemeberId.map((getinfofrom,index)=>(
-                               <td className="align-middle" key={index}>
-                                   <span>{getinfofrom.task}</span>
-                               </td>
-                              ))}
-                              </>:<><td className="align-middle">
-                                   <span>No task Assign</span>
-                               </td></>}
+                              {showmemeberId && showmemeberId.length ? <>
+                                {showmemeberId.map((getinfofrom, index) => (
+                                  <td className="align-middle" key={index}>
+                                    <span>{getinfofrom.task}</span>
+                                  </td>
+                                ))}
+                              </> : <><td className="align-middle">
+                                <span>No task Assign</span>
+                              </td></>}
 
-                              <td className="align-middle">
+                              {/* <td className="align-middle">
                                 <h6 className="mb-0">
                                   <MDBBadge className="mx-2" color="danger">
                                     status
                                   </MDBBadge>
                                 </h6>
-                              </td>
-                              <td className="align-middle">
+                              </td> */}
+                              <td className="d-flex justify-content-center">
                                 <button className="btn btn-primary" onClick={e => setShow({ index: index, value: memberDetails.userId._id, status: true })}>Task</button>
-                                <button className="btn btn-danger">Danger</button>
+                                <button className="btn btn-danger ml-3" onClick={e=>handleKick(memberDetails.userId._id,id)}>Kick Member</button>
+                                <Link to={`/taskview/pid/${id}/mid/${memberDetails.userId._id}`}><button className="btn btn-success ml-3">View <MDBBadge className="mx-2" color="danger">
+                                {getSubmit ? `(${getSubmit.count})` : null}
+                                  </MDBBadge></button></Link>
                               </td>
                             </tr>
                           </tbody>
@@ -139,12 +215,14 @@ export default function App() {
 
                     </table>
                   </div>
+                  <Link to={`/chatRoom/${id}`}><button className="btn btn-info">chatRoom</button></Link>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+      {/* task modal start */}
       <Modal show={show.status} onHide={e => setShow({ index: 0, value: '', status: false })}>
         <Modal.Header className='gradient-custom-2 border-0 text-white'>
           <Modal.Title>Assign Task</Modal.Title>
@@ -158,6 +236,36 @@ export default function App() {
           </div>
         </Modal.Body>
       </Modal>
+      {/* task modal end */}
+
+      {/* request modal start */}
+      <Modal show={showModal} onHide={e => setShowModal(false)}>
+        <Modal.Header className='gradient-custom-2 border-0 text-white'>
+          <Modal.Title>Requests</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className='gradient-custom-2'>
+        {getRequest?<>
+        {getRequest.map((info,index)=>(
+            <div className='row' key={index}>
+            <div className='col-lg-12 col-md-12 col-sm-12'>
+                <div className='card bg-transparent'>
+                    <div className='card-body d-flex justify-content-between'>
+                        <div>
+                            <h4>{info.jionerId.userName}</h4>
+                        </div>
+                        <div>
+                            <button className='btn btn-success' onClick={e=>{handleAccept(info._id,info.projectId,info.jionerId._id)}}>Accept</button>
+                            <button className='btn btn-danger'>Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        ))}
+        </>:<>No request here</>}
+        </Modal.Body>
+      </Modal>
+      {/* request modal end */}
     </>
   );
 }

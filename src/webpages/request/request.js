@@ -27,3 +27,19 @@ export const getRequestResult = async (id) => {
         throw err
     }
 }
+
+export const DeleteRequest =async(requestId)=>{
+    var config = {
+      method: 'delete',
+    maxBodyLength: Infinity,
+      url: `http://localhost:5000/api/deleteRequest/${requestId}`,
+      headers: { }
+    };
+    
+    try {
+      const response = await axios(config)
+      return response.data
+    } catch (err) {
+      throw err;
+    }
+  }

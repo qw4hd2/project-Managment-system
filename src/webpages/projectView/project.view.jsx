@@ -11,7 +11,7 @@ function Projectview() {
     var config = {
       method: 'get',
       maxBodyLength: Infinity,
-      url: 'http://localhost:5000/api/fetch/fetchAllProduct',
+      url: `http://localhost:5000/api/fetch/fetchAllProduct/${userId}`,
       headers: {}
     };
 

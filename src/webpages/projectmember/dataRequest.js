@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-export const getUserSearchResults = async (searchTerm) => {
+export const getUserSearchResults = async (projectId,projectAdmin,searchTerm) => {
   var data = ""
   var config = {
     method: 'get',
     maxBodyLength: Infinity,
-    url: `http://localhost:5000/api/user/search?userName=${searchTerm}`,
+    url: `http://localhost:5000/api//user/search/project/${projectId}/admin/${projectAdmin}?userName=${searchTerm}`,
     headers: {},
     data: data
   };
@@ -203,4 +203,21 @@ export const taskUploadByMemberToProjectAdmin = async (projectId,memberId) => {
   } catch (err) {
     console.log(err)
   }
+}
+
+export const deteleRequestFromAdmin = async(rid)=>{
+  var config = {
+    method: 'delete',
+  maxBodyLength: Infinity,
+    url: `http://localhost:5000/api/deleteRequestToadmin/rid/${rid}`,
+    headers: { }
+  };
+  
+  try {
+    const response = await axios(config)
+    return response.data
+  } catch (err) {
+    console.log(err)
+  }
+  
 }

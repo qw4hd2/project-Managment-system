@@ -7,7 +7,7 @@ import {
 import Header from "../include/header.js";
 import { FaSearch } from "react-icons/fa";
 import "./../css/style.css";
-import { getUserSearchResults, postProjectMemberRequest, fetchProject, assignTask, taskAssignToMember,requestTojoinProject,getRequestForAdmin ,leaveProejctteam,totalTaskSubmitBySpecificMember} from "./dataRequest.js";
+import { getUserSearchResults, postProjectMemberRequest, fetchProject, assignTask, taskAssignToMember,requestTojoinProject,getRequestForAdmin ,leaveProejctteam,totalTaskSubmitBySpecificMember,deteleRequestFromAdmin} from "./dataRequest.js";
 import { Badge } from "react-bootstrap";
 import {Link} from "react-router-dom";
 import swal from 'sweetalert';
@@ -24,6 +24,7 @@ export default function App() {
   const [getSubmit,setSubmit] = useState(0);
   const [showmemeberId, setmemberID] = useState('')
   const [getRequest,setShowRequest] = useState('');
+  const [getRequestID,setRequestID] = useState('');
   const [getLength,setLength] = useState()
   // projectId
   const { id } = useParams();
@@ -35,8 +36,9 @@ export default function App() {
 
   const handleButtonClick = () => {
     if(searchTerm.trim()){
-    getUserSearchResults(searchTerm).then((response) => {
+    getUserSearchResults(id,userId,searchTerm).then((response) => {
       setSearchuser(response);
+      console.log(response);
     });
   }else{
     setSearchuser([]);
@@ -121,6 +123,15 @@ export default function App() {
       });
   
   }
+  const handleDeleteRequestForUser = async()=>{
+    await deteleRequestFromAdmin(getRequestID).then((response)=>{
+       swal(response,{
+        icon:"success",
+        buttons:{},
+        timer:3000,
+      }).then(setShowModal(false))
+    })
+  }
   useEffect(() => {
     handleFetchProject();
   }, []);
@@ -128,6 +139,10 @@ export default function App() {
     requestTojoinProject(userId,id).then((response)=>{
       setShowRequest(response);
       setLength(response.length);
+      const requestID = response;
+      for(const request of requestID){
+        setRequestID(request._id);
+      }
     })
   }, [userId,id]);
 
@@ -255,7 +270,7 @@ export default function App() {
                         </div>
                         <div>
                             <button className='btn btn-success' onClick={e=>{handleAccept(info._id,info.projectId,info.jionerId._id)}}>Accept</button>
-                            <button className='btn btn-danger'>Delete</button>
+                            <button className='btn btn-danger' onClick={handleDeleteRequestForUser}>Delete</button>
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@ import React,{useState,useEffect} from 'react'
 import { NavLink } from 'react-router-dom';
 import axios from "axios";
 import "./../css/style.css";
+import {RiLogoutCircleRLine} from 'react-icons/ri';
 export default function App() {
   const [showBasic, setShowBasic] = useState(false);
   const userId = sessionStorage.getItem('user');
@@ -23,6 +24,11 @@ export default function App() {
         });
         
   }
+  const logOutHandler =()=>{
+    sessionStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    window.location.href = '/';
+  }
   useEffect(()=>{
       fetchProject();
   },[])
@@ -38,6 +44,7 @@ export default function App() {
             <NavLink to="/home" className="nav-item nav-link">Home</NavLink>
             <NavLink to="/seeProjects"  className="nav-item nav-link">All Projects</NavLink>
             <NavLink to="/request"  className="nav-item nav-link">Request</NavLink>
+            <button onClick={logOutHandler} className='btn btn-danger'><RiLogoutCircleRLine/></button>
          </div>
      </div>
      {showBasic&&(
@@ -46,6 +53,7 @@ export default function App() {
             <NavLink to="/home" className="nav-item nav-link">Home</NavLink>
             <NavLink to="/seeProjects"  className="nav-item nav-link">All Projects</NavLink>
             <NavLink to="/request"  className="nav-item nav-link">Request</NavLink>
+            <div onClick={logOutHandler} className='bg-danger text-center'>Log out</div>
          </div>
      </div>)}
        
